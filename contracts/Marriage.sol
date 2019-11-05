@@ -3,6 +3,7 @@ pragma experimental ABIEncoderV2;
 
 contract Marriage {
 
+
     // Contract info
     string private _name;
     string private _symbol;
@@ -124,15 +125,41 @@ contract Marriage {
     // TASK 2 Invitations
 
 
-    // Record invitations by weddingid
-    mapping (address => uint256[]) private tickets;
+    // Record ticket creation to be able to retrieve it in the transaction
+    event ObtainTicket(
+        uint256 weddingid,
+        bytes ticket,
+        bytes32 weddingid_hash
+    );
 
-    function accept_invitation (uint256 weddingid) public {}
+    // Record invitations by weddingid
+    mapping (uint256 => bytes[]) private tickets;
+
+    function accept_invitation (uint256 weddingid, bytes memory ticket) public {
+        for (uint256 i = 0; i < invitations[msg.sender].length; i++) {
+            if (weddingid == invitations[msg.sender][i]){
+                bytes32 weddingid_hash = keccak256(abi.encodePacked(weddingid));
+                tickets[weddingid].push(ticket);
+                emit ObtainTicket(weddingid, ticket, weddingid_hash);
+            }
+        }
+    }
 
 
     // TASK 3 Log in
 
-    function show_ticket (uint256 ticked) public {}
+    event AccessGranted(
+        uint256 weddingid,
+        address guest,
+        bytes32 weddingid_hash
+    );
+
+    function show_ticket (uint8 v, bytes32 r, bytes32 s, uint256 weddingid) public
+    returns (address guest) {
+        bytes32 weddingid_hash = keccak256(abi.encodePacked(weddingid));
+        guest = ecrecover(weddingid_hash, v, r, s);
+        emit AccessGranted(weddingid, guest, weddingid_hash);
+    }
 
 
     // TASK 4 wedding/Objection
@@ -142,4 +169,6 @@ contract Marriage {
 
 
     // TASK 5 Vote over objection
+
+
 }
