@@ -12,41 +12,122 @@ contract Marriage {
         _symbol = symbol;
     }
 
-    // TASK 1 Arrange marriage
+    /**
+     * @dev Gets the token name
+     * @return string representing the token name
+     */
+    function read_name() external view
+    returns (string memory) {
+        return _name;
+    }
 
-    // Store marriage as an object
-    struct Marriage{}
+    /**
+     * @dev Gets the token symbol
+     * @return string representing the token symbol
+     */
+    function read_symbol() external view
+    returns (string memory) {
+        return _symbol;
+    }
+
+    // TASK 1 Arrange wedding
+
+    // Store wedding as an object
+    struct Wedding{
+        address proposer;
+        address accepter;
+        uint64 date;
+        address[] guest_list;
+        string status;
+    }
 
     // Mapping to represent a proposal
     mapping (address => address) private proposal;
-    
+
     // Show all incoming proposals
-    mapping (address => address[]) private proposals
-    
+    mapping (address => address[]) private proposals;
+
     // Record an accepted proposal
     mapping (address => address) private accepted_proposal;
 
-    // Marriageid to invited users
-    mapping (uint256 => address[]) private invitations;
+    // weddingid to invited users
+    //mapping (uint256 => address[]) private invitations;
 
     // Users to invitations
-    mapping (address => uint256[]) private invitations
+    mapping (address => uint256[]) private invitations;
+
+    // List to store weddings
+    Wedding[] weddings;
+
+    // Link the addresses to be married to their wedding
+    mapping (address => uint256) private address_to_wedding;
 
     // Propose to someone
-    function propose (address to) public {}
+    function propose (address to) public {
+        proposal[msg.sender] = to;
+        proposals[to].push(msg.sender);
+    }
+
+    function get_incoming_proposals () public view
+    returns (address[] memory incoming_proposals) {
+        incoming_proposals = proposals[msg.sender];
+    }
+
+    function get_pending_proposal () public view
+    returns (address accepter) {
+        accepter = proposal[msg.sender];
+    }
 
     // Accept a proposal
-    function accept (address from) public {}
+    function accept (address from) public
+    returns (uint256 weddingid) {
+        require((proposal[from] == msg.sender), "Error, you have not been proposed to by this address");
+        Wedding memory wedding;
+        wedding.proposer = from;
+        wedding.accepter = msg.sender;
+        wedding.date = 0;
+        address[] memory guest_list;
+        wedding.guest_list = guest_list;
+        wedding.status = "engaged";
 
-    // Arrange a marriage if the proposal has been accepted
-    function arrange (string memory date, string[] memory guest_list) public {}
+        weddingid = weddings.push(wedding)-1;
+        address_to_wedding[from] = weddingid;
+        address_to_wedding[msg.sender] = weddingid;
+    }
+
+    // Arrange a wedding if the proposal has been accepted
+    function arrange (uint256 weddingid, uint64 date, address[] memory guest_list) public {
+        require((address_to_wedding[msg.sender] == weddingid), "Account is not engaged in any marriage");
+        Wedding memory wedding = weddings[weddingid];
+        wedding.date = date;
+        wedding.guest_list = guest_list;
+        wedding.status = "arranged";
+
+        for (uint i = 0; i < guest_list.length; i++){
+            invitations[guest_list[i]].push(weddingid);
+        }
+
+        weddings[weddingid] = wedding;
+    }
+
+    function get_wedding_id () public view
+    returns (uint256 weddingid) {
+        weddingid = address_to_wedding[msg.sender];
+    }
+
+    function get_wedding_by_id (uint256 weddingid) public view
+    returns (Wedding memory wedding) {
+        wedding = weddings[weddingid];
+    }
 
 
     // TASK 2 Invitations
 
-    mapping (address => uint256[]) private tickets
 
-    function accept invitation (uint256 marriageid) public {}
+    // Record invitations by weddingid
+    mapping (address => uint256[]) private tickets;
+
+    function accept_invitation (uint256 weddingid) public {}
 
 
     // TASK 3 Log in
@@ -54,10 +135,10 @@ contract Marriage {
     function show_ticket (uint256 ticked) public {}
 
 
-    // TASK 4 Marriage/Objection
+    // TASK 4 wedding/Objection
 
-    // Perform marriage and wait for objection
-    function perform_marriage () public {}
+    // Perform wedding and wait for objection
+    function perform_wedding () public {}
 
 
     // TASK 5 Vote over objection
