@@ -164,9 +164,51 @@ contract Marriage {
 
     // TASK 4 wedding/Objection
 
-    // Perform wedding and wait for objection
-    function perform_wedding () public {}
+    event CallForObjection(
+        uint256 weddingid,
+        string message,
+        uint objection_time
+    );
 
+    mapping (uint256 => uint) objection_time;
+
+    // Perform wedding and wait for objection
+    function call_for_objection() public {
+        uint256 weddingid = get_wedding_id();
+        uint objection_time_now = (now + 3 seconds);
+        string memory message = "if anyone has an objection to these twobeing married, speak now or forever hold your peace";
+        objection_time[weddingid] = objection_time_now;
+        emit CallForObjection(weddingid, message, objection_time_now);
+    }
+
+    mapping (uint256 => address[]) objections;
+
+    function object(uint256 weddingid) public {
+        Wedding memory wedding = weddings[weddingid];
+        for (uint i = 0; i < wedding.guest_list.length; i++){
+            if(msg.sender == wedding.guest_list[i]){
+                objections[weddingid].push(msg.sender);
+            }
+        }
+    }
+
+    event Married(
+        address proposer,
+        address accepter,
+        uint256 weddingid,
+        uint time,
+        uint objection_time
+    );
+
+    function seal_the_deal() public {
+        uint256 weddingid = get_wedding_id();
+        uint time = now;
+        require((objection_time[weddingid] > 0), "Objection time not set");
+        require((objection_time[weddingid] < time), "Hold your horses");
+        require((objections[weddingid].length == 0), "Someone has objected");
+        Wedding memory wedding = get_wedding_by_id(weddingid);
+        emit Married(wedding.proposer, wedding.accepter, weddingid, time, objection_time[weddingid]);
+    }
 
     // TASK 5 Vote over objection
 

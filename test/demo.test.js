@@ -1,6 +1,10 @@
 const Marriage = artifacts.require("./Marriage.sol");
 const ethUtil = require('ethereumjs-util')
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 contract("Marriage", accounts => {
 
     name = "Marriage";
@@ -59,19 +63,6 @@ contract("Marriage", accounts => {
     })
 
     it("Show ticket", async () => {
-        /*signature = '0xc74598c872fd0bc07644c90bd601ea29b647fc31383e1896805db2508b0e118a15d2d06c931985329db649aa10305af5415557c89d9f361f58cf833566132c151c'
-        signature = signature.substr(0, 130) + (signature.substr(130) == "00" ? "1b" : "1c");
-        console.log(signature)
-        show_ticket = await contract.show_ticket('0x1c', '0xc74598c872fd0bc07644c90bd601ea29b647fc31383e1896805db2508b0e118a', '0x15d2d06c931985329db649aa10305af5415557c89d9f361f58cf833566132c15', weddingid)
-        console.log(show_ticket)
-        guest = show_ticket.logs[0].args.guest
-        wedding_id = show_ticket.logs[0].args.wedding_id
-        weddingid_hash = show_ticket.logs[0].args.weddingid_hash
-        console.log(wedding_id, weddingid_hash, guest)
-        expect(guest).to.equal(guest_list[0])*/
-
-
-
         signatureData = ethUtil.fromRpcSig(signature);
         v = ethUtil.bufferToHex(signatureData.v);
         r = ethUtil.bufferToHex(signatureData.r);
@@ -85,4 +76,21 @@ contract("Marriage", accounts => {
         expect(rea).to.equal(guest_list[0])
     })
 
+    it("Call for objection", async () => {
+        call = await contract.call_for_objection()
+        objection_time = call.logs[0].args.objection_time
+        console.log(objection_time)
+    })
+
+    it("Object", async () => {
+        await contract.object(weddingid, {from: guest_list[0]})
+    })
+
+    it("Seal the deal", async () => {
+        await sleep(4000)
+        deal = await contract.seal_the_deal()
+        time = deal.logs[0].args.time
+        objection_time = deal.logs[0].args.objection_time
+        console.log(objection_time, time)
+    })
 })
