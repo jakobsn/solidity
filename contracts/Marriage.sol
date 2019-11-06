@@ -148,19 +148,10 @@ contract Marriage {
 
     // TASK 3 Log in
 
-    event AccessGranted(
-        uint256 weddingid,
-        address guest,
-        bytes32 weddingid_hash
-    );
-
-    function show_ticket (uint8 v, bytes32 r, bytes32 s, uint256 weddingid) public
-    returns (address guest) {
-        bytes32 weddingid_hash = keccak256(abi.encodePacked(weddingid));
-        guest = ecrecover(weddingid_hash, v, r, s);
-        emit AccessGranted(weddingid, guest, weddingid_hash);
-    }
-
+    // This task is purely performed with the tickets mapping, 
+    // client side signing and blockchain verification with built in functions. 
+    // View test for accept invitation to see how the ticket is created with a signature
+    // View test for show tickets to see how the verification is performed
 
     // TASK 4 wedding/Objection
 
@@ -175,13 +166,21 @@ contract Marriage {
     // Perform wedding and wait for objection
     function call_for_objection() public {
         uint256 weddingid = get_wedding_id();
-        uint objection_time_now = (now + 3 seconds);
+        uint objection_time_now = (now + 10 seconds);
         string memory message = "if anyone has an objection to these twobeing married, speak now or forever hold your peace";
         objection_time[weddingid] = objection_time_now;
         emit CallForObjection(weddingid, message, objection_time_now);
     }
 
     mapping (uint256 => address[]) objections;
+
+    event Failed(
+        address proposer,
+        address accepter,
+        uint256 weddingid,
+        uint time,
+        uint objection_time
+    );
 
     function object(uint256 weddingid) public {
         Wedding memory wedding = weddings[weddingid];
@@ -190,6 +189,9 @@ contract Marriage {
                 objections[weddingid].push(msg.sender);
             }
         }
+        wedding.status = "failed";
+        weddings[weddingid] = wedding;
+        emit Failed(wedding.proposer, wedding.accepter, weddingid, now, objection_time[weddingid]);
     }
 
     event Married(
@@ -207,10 +209,11 @@ contract Marriage {
         require((objection_time[weddingid] < time), "Hold your horses");
         require((objections[weddingid].length == 0), "Someone has objected");
         Wedding memory wedding = get_wedding_by_id(weddingid);
+        wedding.status = "complete";
+        weddings[weddingid] = wedding;
         emit Married(wedding.proposer, wedding.accepter, weddingid, time, objection_time[weddingid]);
     }
 
     // TASK 5 Vote over objection
-
 
 }

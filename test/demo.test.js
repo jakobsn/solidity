@@ -32,6 +32,7 @@ contract("Marriage", accounts => {
         wedding = await contract.accept(proposer, {from: accepter});
         weddingid = await contract.get_wedding_id()
         wedding_object = await contract.get_wedding_by_id(weddingid)
+        console.log("Initial wedding object")
         console.log(wedding_object)
         expect(wedding_object.proposer).to.equal(proposer);
         expect(wedding_object.accepter).to.equal(accepter);
@@ -41,6 +42,7 @@ contract("Marriage", accounts => {
     it("Arrange wedding", async () => {
         wedding = await contract.arrange(weddingid, unix_date_time, guest_list, {from: proposer})
         wedding_object = await contract.get_wedding_by_id(weddingid)
+        console.log("Wedding object after being accepted")
         console.log(wedding_object)
         expect(wedding_object.proposer).to.equal(proposer);
         expect(wedding_object.accepter).to.equal(accepter);
@@ -58,8 +60,8 @@ contract("Marriage", accounts => {
         ticket = await contract.accept_invitation(weddingid, signature, {from: guest_list[0]});
         weddingid_hash = ticket.logs[0].args.weddingid_hash
         ticket = ticket.logs[0].args.ticket
-        console.log(ticket)
-        console.log(weddingid_hash)
+        console.log("ticket: ", ticket)
+        console.log("weddingid hash: ", weddingid_hash)
     })
 
     it("Show ticket", async () => {
@@ -67,12 +69,13 @@ contract("Marriage", accounts => {
         v = ethUtil.bufferToHex(signatureData.v);
         r = ethUtil.bufferToHex(signatureData.r);
         s = ethUtil.bufferToHex(signatureData.s);
-        console.log(guest_list[0])
-        console.log(messagetoSign)
-        console.log(signature)
-        console.log(signatureData)
+        //console.log(guest_list[0])
+        //console.log(messagetoSign)
+        console.log("ticket: ", signature)
+        //console.log(signatureData)
         rea = await web3.eth.accounts.recover(messagetoSign, v, r, s)
-        console.log(rea)
+        console.log("The result of running recover() on the ticket: ", rea)
+        console.log("The actual signer of the ticket: ", guest_list[0])
         expect(rea).to.equal(guest_list[0])
     })
 
@@ -82,15 +85,17 @@ contract("Marriage", accounts => {
         console.log(objection_time)
     })
 
-    it("Object", async () => {
+    /*it("Object", async () => {
         await contract.object(weddingid, {from: guest_list[0]})
-    })
+        wedding_object = await contract.get_wedding_by_id(weddingid)
+        console.log("Wedding failed")
+        console.log(wedding_object)    })*/
 
     it("Seal the deal", async () => {
-        await sleep(4000)
-        deal = await contract.seal_the_deal()
-        time = deal.logs[0].args.time
-        objection_time = deal.logs[0].args.objection_time
-        console.log(objection_time, time)
+        await sleep(11000)
+        deal = await contract.seal_the_deal({from: proposer})
+        wedding_object = await contract.get_wedding_by_id(weddingid)
+        console.log("Wedding complete")
+        console.log(wedding_object)
     })
 })
